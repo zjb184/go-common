@@ -1,7 +1,9 @@
 package common
 
 import (
+	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"sort"
 	"strconv"
@@ -276,4 +278,149 @@ func Wordwrap(str string, width int, breakStr string) string {
 		result += breakStr
 	}
 	return result
+}
+
+func Mul(a, b float64, more ...float64) (float64, error) {
+	bigF1 := new(big.Float).SetFloat64(a)
+
+	bigF2 := new(big.Float).SetFloat64(b)
+
+	pf := new(big.Float).Mul(bigF1, bigF2)
+
+	if len(more) > 0 {
+		for _, m := range more {
+			floatM := new(big.Float).SetFloat64(m)
+			pf = new(big.Float).Mul(pf, floatM)
+		}
+	}
+
+	return strconv.ParseFloat(pf.String(), 64)
+}
+
+func MulCeil(a, b float64, more ...float64) (result float64, err error) {
+	result, err = Mul(a, b, more...)
+	if err != nil {
+		return
+	}
+	result, err = FormatFloatCeil(result, 2)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func Add(a, b float64, more ...float64) (float64, error) {
+	bigF1 := new(big.Float).SetFloat64(a)
+
+	bigF2 := new(big.Float).SetFloat64(b)
+
+	pf := new(big.Float).Add(bigF1, bigF2)
+
+	if len(more) > 0 {
+		for _, m := range more {
+			floatM := new(big.Float).SetFloat64(m)
+			pf = new(big.Float).Add(pf, floatM)
+		}
+	}
+
+	return strconv.ParseFloat(pf.String(), 64)
+}
+
+func AddCeil(a, b float64, more ...float64) (result float64, err error) {
+	result, err = Add(a, b, more...)
+	if err != nil {
+		return
+	}
+	result, err = FormatFloatCeil(result, 2)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func Sub(a, b float64, more ...float64) (float64, error) {
+	bigF1 := new(big.Float).SetFloat64(a)
+
+	bigF2 := new(big.Float).SetFloat64(b)
+
+	pf := new(big.Float).Sub(bigF1, bigF2)
+
+	if len(more) > 0 {
+		for _, m := range more {
+			floatM := new(big.Float).SetFloat64(m)
+			pf = new(big.Float).Sub(pf, floatM)
+		}
+	}
+
+	return strconv.ParseFloat(pf.String(), 64)
+}
+
+func SubCeil(a, b float64, more ...float64) (result float64, err error) {
+	result, err = Sub(a, b, more...)
+	if err != nil {
+		return
+	}
+	result, err = FormatFloatCeil(result, 2)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func Div(a, b float64, more ...float64) (float64, error) {
+	if b == 0 {
+		return 0, errors.New("除数不能为0")
+	}
+
+	bigF1 := new(big.Float).SetFloat64(a)
+
+	bigF2 := new(big.Float).SetFloat64(b)
+
+	pf := new(big.Float).Quo(bigF1, bigF2)
+
+	if len(more) > 0 {
+		for _, m := range more {
+			if m == 0 {
+				return 0, errors.New("除数不能为0")
+			}
+			floatM := new(big.Float).SetFloat64(m)
+			pf = new(big.Float).Quo(pf, floatM)
+		}
+	}
+
+	return strconv.ParseFloat(pf.String(), 64)
+}
+
+func DivCeil(a, b float64, more ...float64) (result float64, err error) {
+	result, err = Div(a, b, more...)
+	if err != nil {
+		return
+	}
+	result, err = FormatFloatCeil(result, 2)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func FormatFloatCeil(num float64, decimal int) (float64, error) {
+	// 默认乘1
+	d := float64(1)
+	if decimal > 0 {
+		// 10的N次方
+		d = math.Pow10(decimal)
+	}
+	// math.trunc作用就是返回浮点数的整数部分
+	// 再除回去，小数点后无效的0也就不存在了
+	price, err := Mul(num, d)
+	if err != nil {
+		return 0, nil
+	}
+	ceil := math.Ceil(price)
+	price, err = Div(ceil, d)
+	if err != nil {
+		return 0, nil
+	}
+	res := strconv.FormatFloat(price, 'f', -1, 64)
+	return strconv.ParseFloat(res, 64)
 }
